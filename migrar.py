@@ -15,6 +15,12 @@ drive = GoogleDrive(gauth) # Create GoogleDrive instance with authenticated Goog
 archivoDestino = open('origenDestino.csv', "w")
 archivoDestino.close()
 
+#CrearCarpeta Backup
+#Guardar el id de Carpeta Backup de destino.
+#if file_list = 'start'
+# parentid = idbackupdestino
+
+
 #Defino funcion para crear carpeta de Backup y me devuelva su id.
 def crearCarpeta(titulo,origen):
   archivoDestino = open('origenDestino.csv', "a")
@@ -36,12 +42,15 @@ def copiarsubarchivos():
   with open('origenDestino.csv', 'r') as file:
     csvreader = csv.reader(file)
     for row in csvreader:
-      query = drive.ListFile({'q': f"'{row[0]}' in parents and trashed=false"}).GetList()
-      for archivito in query:
-        if archivito["mimeType"] != "application/vnd.google-apps.folder":
-          archivito.Copy(target_folder={"id":row[1]})
-        else:
-          print("skip es una carpeta")
+      if row[0] != 'start':
+        query = drive.ListFile({'q': f"'{row[0]}' in parents and trashed=false"}).GetList()
+        for archivito in query:
+          if archivito["mimeType"] != "application/vnd.google-apps.folder":
+            archivito.Copy(target_folder={"id":row[1]})
+          else:
+            print("skip es una carpeta")
+
+      
   #abrir csv en modo read
   #bucle de lectura del csv
     #leo linea, tomo parent old
@@ -83,6 +92,10 @@ def listarCarpetasCompartidas(file_list):
           print(n)
           while n[0] == row[3]:
             query = drive.CreateFile({'id': f'{newfolder}', 'parents' : [{'id': n[1]}]})
+            query.Upload()
+            break
+          while row[3] == '[]':
+            query = drive.CreateFile({'id': f'{newfolder}', 'parents' : [{'id': idcarpetaraiz}]})
             query.Upload()
             break
         listarCarpetasCompartidas(row[1])
