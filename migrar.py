@@ -44,6 +44,8 @@ def listarCarpetasCompartidas(file_list):
     if file1["parents"] != []:
       parentid = file1["parents"][0]["id"]
       archivo.write('%s,%s,%s,%s\n' % (file1["title"], file1["id"], file1["mimeType"], parentid))
+    elif file1["parents"] == [] and file1["mimeType"] != "application/vnd.google-apps.folder":
+      file1.Copy(target_folder={"id":idcarpetaraiz})
     else:
       archivo.write('%s,%s,%s,%s\n' % (file1["title"], file1["id"], file1["mimeType"], file1["parents"]))
   archivo.close()
@@ -62,7 +64,17 @@ def listarCarpetasCompartidas(file_list):
             query.Upload()
             break
         listarCarpetasCompartidas(row[1])
+      elif row[2] != 'application/vnd.google-apps.folder':       
+        a = open('origenDestino.csv', "r")
+        acsv = csv.reader(a)
+        for n in acsv:
+          print(n)
+          while n[0] == row[3]:
+            query = drive.CreateFile({'id': f'{row[1]}', 'parents' : [{'id': n[1]}]})
+            query.Upload()
+            break
+        listarCarpetasCompartidas(row[1])
       break
- 
+
 
 listarCarpetasCompartidas(file_list)
