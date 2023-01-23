@@ -15,6 +15,12 @@ drive = GoogleDrive(gauth) # Create GoogleDrive instance with authenticated Goog
 archivoDestino = open('origenDestino.csv', "w")
 archivoDestino.close()
 
+#CrearCarpeta Backup
+#Guardar el id de Carpeta Backup de destino.
+#if file_list = 'start'
+# parentid = idbackupdestino
+
+
 #Defino funcion para crear carpeta de Backup y me devuelva su id.
 def crearCarpeta(titulo,origen):
   archivoDestino = open('origenDestino.csv', "a")
@@ -29,6 +35,31 @@ def crearCarpeta(titulo,origen):
   return folderid
 
 file_list = 'start'
+
+
+#declaro funcion
+def copiarsubarchivos():
+  with open('origenDestino.csv', 'r') as file:
+    csvreader = csv.reader(file)
+    for row in csvreader:
+      if row[0] != 'start':
+        query = drive.ListFile({'q': f"'{row[0]}' in parents and trashed=false"}).GetList()
+        for archivito in query:
+          if archivito["mimeType"] != "application/vnd.google-apps.folder":
+            archivito.Copy(target_folder={"id":row[1]})
+          else:
+            print("skip es una carpeta")
+
+      
+  #abrir csv en modo read
+  #bucle de lectura del csv
+    #leo linea, tomo parent old
+    #hago una query que me devuelva los archivos de parent old
+    #abro for archivito en query
+      #archivito.copy con id destino parentnew(row1)
+
+
+
 def listarCarpetasCompartidas(file_list):
   nombredearchivo = '%s.csv' % (file_list)
   #Creamos archivo CSV
@@ -44,6 +75,8 @@ def listarCarpetasCompartidas(file_list):
     if file1["parents"] != []:
       parentid = file1["parents"][0]["id"]
       archivo.write('%s,%s,%s,%s\n' % (file1["title"], file1["id"], file1["mimeType"], parentid))
+    elif file1["parents"] == [] and file1["mimeType"] != "application/vnd.google-apps.folder":
+      file1.Copy(target_folder={"id":idcarpetaraiz})
     else:
       archivo.write('%s,%s,%s,%s\n' % (file1["title"], file1["id"], file1["mimeType"], file1["parents"]))
   archivo.close()
@@ -61,8 +94,13 @@ def listarCarpetasCompartidas(file_list):
             query = drive.CreateFile({'id': f'{newfolder}', 'parents' : [{'id': n[1]}]})
             query.Upload()
             break
+          while row[3] == '[]':
+            query = drive.CreateFile({'id': f'{newfolder}', 'parents' : [{'id': idcarpetaraiz}]})
+            query.Upload()
+            break
         listarCarpetasCompartidas(row[1])
       break
- 
+
 
 listarCarpetasCompartidas(file_list)
+copiarsubarchivos()
