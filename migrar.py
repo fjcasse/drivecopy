@@ -29,6 +29,28 @@ def crearCarpeta(titulo,origen):
   return folderid
 
 file_list = 'start'
+
+
+#declaro funcion
+def copiarsubarchivos():
+  with open('origenDestino.csv', 'r') as file:
+    csvreader = csv.reader(file)
+    for row in csvreader:
+      query = drive.ListFile({'q': f"'{row[0]}' in parents and trashed=false"}).GetList()
+      for archivito in query:
+        if archivito["mimeType"] != "application/vnd.google-apps.folder":
+          archivito.Copy(target_folder={"id":row[1]})
+        else:
+          print("skip es una carpeta")
+  #abrir csv en modo read
+  #bucle de lectura del csv
+    #leo linea, tomo parent old
+    #hago una query que me devuelva los archivos de parent old
+    #abro for archivito en query
+      #archivito.copy con id destino parentnew(row1)
+
+
+
 def listarCarpetasCompartidas(file_list):
   nombredearchivo = '%s.csv' % (file_list)
   #Creamos archivo CSV
@@ -64,17 +86,8 @@ def listarCarpetasCompartidas(file_list):
             query.Upload()
             break
         listarCarpetasCompartidas(row[1])
-      elif row[2] != 'application/vnd.google-apps.folder':       
-        a = open('origenDestino.csv', "r")
-        acsv = csv.reader(a)
-        for n in acsv:
-          print(n)
-          while n[0] == row[3]:
-            query = drive.CreateFile({'id': f'{row[1]}', 'parents' : [{'id': n[1]}]})
-            query.Upload()
-            break
-        listarCarpetasCompartidas(row[1])
       break
 
 
 listarCarpetasCompartidas(file_list)
+copiarsubarchivos()
